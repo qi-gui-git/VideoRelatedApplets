@@ -1,28 +1,50 @@
-ï»¿@echo off
+@echo off
 setlocal enabledelayedexpansion
 chcp 65001
 
-@echo off
+:: ³]©w ffmpeg ¸ô®|
 set ffmpeg_path="%~dp0ffmpeg-6.1.1-full_build\bin\ffmpeg.exe"
 
-echo å³å°‡åˆä½µçš„æ–‡ä»¶ï¼š
-(for /f "tokens=*" %%a in ('dir /b /on *.m2ts ^| findstr /v /i /c:output.m2ts') do (
+:: ¸ê®Æ§¨ÀË®Ö
+if not exist "%~dp0¼v¤ù¦XÀÉInput\" (
+    echo ¿ù»~¡G§ä¤£¨ì¸ê®Æ§¨ "¼v¤ù¦XÀÉInput"
+    pause
+    exit
+)
+if not exist "%~dp0¼v¤ù¦XÀÉOutput\" (
+    echo ¿ù»~¡G§ä¤£¨ì¸ê®Æ§¨ "¼v¤ù¦XÀÉOutput"
+    pause
+    exit
+)
+
+:: ½Ð¥Î¤á½T»{¦X¨ÖÀÉ«ö¶¶§Ç
+echo §Y±N¦X¨Öªº¤å¥ó¡G
+(for /f "tokens=*" %%a in ('dir /b /on "%~dp0¼v¤ù¦XÀÉInput\*.m2ts" ^| findstr /v /i /c:output.m2ts') do (
      echo %%a
 ))
 
-set /p choice=æ˜¯å¦ç¹¼çºŒåŸ·è¡Œï¼Ÿ (Y/N):
+set /p choice=¬O§_Ä~Äò°õ¦æ¡H (Y/N):
 if /i "%choice%"=="N" (
-     echo ä½¿ç”¨è€…é¸æ“‡ä¸­æ–·åŸ·è¡Œã€‚
+     echo ¨Ï¥ÎªÌ¿ï¾Ü¤¤Â_°õ¦æ¡C
      pause
      exit
 )
 
-(for /f "tokens=*" %%a in ('dir /b /on *.m2ts ^| findstr /v /i /c:output.m2ts') do (
-     echo file '%%a'
-)) > m2ts_files.txt
+:: Àò¨ú·í«e¤é´Á©M®É¶¡¡A®æ¦¡¬° YYYYMMDD-HHMMSS
+for /f "tokens=2 delims==" %%A in ('"wmic os get localdatetime /value"') do set datetime=%%A
+set timestamp=%datetime:~0,8%-%datetime:~8,6%
 
-%ffmpeg_path% -safe 0 -ss 0 -f concat -i "%~dp0m2ts_files.txt" -fflags +genpts -vf yadif -c:v h264_nvenc -bf 0 -rc:v vbr -g 15 -b:v 8M -maxrate:v 8M -bufsize:v 8M  -c:a ac3 -b:a 256k -ac 2 -ar 48000 output.m2ts
+:: ¿é¥X¥Ø¿ý
+set output_file="%~dp0¼v¤ù¦XÀÉOutput\¦XÀÉ%timestamp%.m2ts"
 
-rem del /q m2ts_files.txt
+
+:: ¦X¨Ö¼v¤ù
+(for /f "tokens=*" %%a in ('dir /b /on "%~dp0¼v¤ù¦XÀÉInput\*.m2ts" ^| findstr /v /i /c:output.m2ts') do (
+     echo file '%~dp0¼v¤ù¦XÀÉInput\%%a'
+)) > "%~dp0m2ts_files.txt"
+%ffmpeg_path% -safe 0 -ss 0 -f concat -i "%~dp0m2ts_files.txt" -fflags +genpts -vf yadif -c:v h264_nvenc -bf 0 -rc:v vbr -g 15 -b:v 13M -maxrate:v 13M -bufsize:v 13M  -c:a ac3 -b:a 256k -ac 2 -ar 48000 %output_file%
+
+:: ²M²z¼È¦sÀÉ®×
+rem del /q "%~dp0m2ts_files.txt"
 
 pause
